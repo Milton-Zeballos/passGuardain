@@ -14,11 +14,5 @@ done
 
 echo "✅ Base de datos lista, migraciones aplicadas."
 
-# Iniciar Gunicorn (servidor de producción)
-# Ajusta 'backend.wsgi:application' si tu carpeta de settings se llama diferente
-exec gunicorn backend.wsgi:application \
-  --bind 0.0.0.0:8000 \
-  --workers 3 \
-  --timeout 120 \
-  --access-logfile - \
-  --error-logfile -
+# Iniciar Daphne (servidor ASGI de producción con soporte WebSockets)
+exec daphne -b 0.0.0.0 -p 8000 backend.asgi:application

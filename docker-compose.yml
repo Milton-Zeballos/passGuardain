@@ -31,7 +31,22 @@ services:
       start_period: 180s
 
   # ----------------------------------------
-  # Backend: Django (con Gunicorn)
+  # Redis: Channel Layer (WebSockets)
+  # ----------------------------------------
+  redis:
+    image: redis:7-alpine
+    container_name: redis_cache
+    restart: always
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  # ----------------------------------------
+  # Backend: Django
   # ----------------------------------------
   backend:
     build:
@@ -51,6 +66,8 @@ services:
       - DJANGO_ALLOWED_HOSTS=${DJANGO_ALLOWED_HOSTS}
     depends_on:
       db:
+        condition: service_healthy
+      redis:
         condition: service_healthy
 
   # ----------------------------------------

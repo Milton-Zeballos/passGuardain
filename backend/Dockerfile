@@ -34,4 +34,5 @@ RUN chmod +x /entrypoint.sh
 
 EXPOSE 8000
 
+# Arranca migraciones (con espera para MySQL) y luego servidor ASGI (Channels/WebSockets) con daphne
 ENTRYPOINT ["/entrypoint.sh"]
