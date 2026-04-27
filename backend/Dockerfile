@@ -1,15 +1,16 @@
-# Usa una imagen oficial de Python liviana
+# ============================================================
+# PassGuardian - Backend Dockerfile (PRODUCCIÓN)
+# ============================================================
+
 FROM python:3.11-slim
 
-# Variables de entorno para optimizar Python en Docker
-# Evita que Python genere archivos .pyc y asegura que los logs se vean en tiempo real
-ENV PYTHONDONTWRITEBYTECODE 1
-ENV PYTHONUNBUFFERED 1
+# Optimizaciones de Python para Docker
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
 
-# Directorio de trabajo dentro del contenedor
 WORKDIR /app
 
-# Instalación de dependencias del sistema necesarias para mysqlclient y herramientas de compilación
+# Dependencias del sistema para mysqlclient
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     pkg-config \
@@ -17,17 +18,21 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     gcc \
     && rm -rf /var/lib/apt/lists/*
 
-# Copiar el archivo de requerimientos primero para aprovechar la caché de capas de Docker
+# Primero copiamos solo requirements para aprovechar caché de capas
 COPY requirements.txt /app/
-
-# Instalación de dependencias de Python
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copiar el resto del código del proyecto al contenedor
+# Instalamos gunicorn (servidor de producción)
+RUN pip install gunicorn
+
+# Copiamos el resto del código
 COPY . /app/
 
-# Exponer el puerto que usa Django por defecto
+# Script de entrada
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
 EXPOSE 8000
 
-# Arranca migraciones y luego servidor ASGI (Channels/WebSockets) con daphne
-CMD ["sh", "-c", "python manage.py migrate --noinput && exec daphne -b 0.0.0.0 -p 8000 backend.asgi:application"]
+# Arranca migraciones (con espera para MySQL) y luego servidor ASGI (Channels/WebSockets) con daphne
+ENTRYPOINT ["/entrypoint.sh"]
