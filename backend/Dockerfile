@@ -29,10 +29,5 @@ COPY . /app/
 # Exponer el puerto que usa Django por defecto
 EXPOSE 8000
 
-# Comando para iniciar el servidor de desarrollo (útil para pruebas)
-# --noreload: con el código montado por volumen, el autoreload de Django puede
-# reiniciar el proceso cuando MySQL aún no responde y dejar el contenedor sin
-# ningún proceso escuchando en 8000 (conexión rechazada desde el host).
-# migrate: aplica esquema en el arranque para que check_migrations no falle en frío.
-# En producción se recomienda usar gunicorn y un entrypoint con wait-for-db.
-CMD ["sh", "-c", "python manage.py migrate --noinput && exec python manage.py runserver 0.0.0.0:8000 --noreload"]
+# Arranca migraciones y luego servidor ASGI (Channels/WebSockets) con daphne
+CMD ["sh", "-c", "python manage.py migrate --noinput && exec daphne -b 0.0.0.0 -p 8000 backend.asgi:application"]
